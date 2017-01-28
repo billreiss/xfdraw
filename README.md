@@ -1,6 +1,6 @@
-# XFDraw
+#XFDraw
 
-Work in progress. Accepting contributors. Draw to custom DrawingCanvas control using cross-platform drawing primitives. Create custom controls based on DrawingCanvas in shared code without extra custom renderers. 
+Work in progress. Accepting contributors. Draw to custom Xamarin Forms DrawingCanvas control on Android, iOS, and UWP (UWP coming soon) using cross-platform drawing primitives. Create custom controls based on DrawingCanvas in shared code without extra custom renderers.
 
 XFDraw is meant to be lightweight, adding minimal size to your app. No extra dependencies on Android and iOS, UWP will require the Win2D library (additional 1MB).
 
