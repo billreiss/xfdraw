@@ -1,4 +1,4 @@
- = 150x#XFDraw
+  = 150x#XFDraw
 
 Work in progress. Accepting contributors. Draw to custom Xamarin Forms DrawingCanvas control on Android, iOS, and UWP using cross-platform drawing primitives. Create custom controls based on DrawingCanvas in shared code without extra custom renderers.
 
@@ -10,11 +10,11 @@ For a more full featured library, take a look at SkiaSharp https://github.com/mo
 
 ### Android
 
-![Image for Android](/Screenshots/Android_Draw.PNG=150x)
+![Image for Android](/Screenshots/Android_Draw.PNG =150x)
 
 ### iOS
 
-![Image for iOS](/Screenshots/iOS_Draw.PNG=150x)
+![Image for iOS](/Screenshots/iOS_Draw.PNG =150x)
 
 Coming soon:
 - Draw with gradients and images
