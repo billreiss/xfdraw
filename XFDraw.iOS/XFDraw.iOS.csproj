@@ -60,7 +60,6 @@
   <ItemGroup>
     <Compile Include="Platform.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Renderers\BorderRendererIOS.cs" />
     <Compile Include="Renderers\DrawingCanvasRendererIOS.cs" />
     <Compile Include="Renderers\DrawingContextIOS.cs" />
   </ItemGroup>

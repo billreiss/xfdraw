@@ -10,26 +10,19 @@ namespace XFDrawSamples
 {
     public partial class MainPage : ContentPage
     {
-        float boxSize = 100;
-        Color fillColor = Color.Blue;
         public MainPage()
         {
             InitializeComponent();
         }
 
-        protected void DrawingCanvas_Draw(object sender, DrawEventArgs args)
+        protected async void OnDrawingClicked(object sender, EventArgs args)
         {
-            var ctx = args.Context;
-            ctx.SetStrokeColor(Color.Red);
-            ctx.SetFillColor(fillColor);
-            ctx.DrawRoundedRect(210, 10, boxSize, boxSize, 10, 10, 5);
+            await NavigationService.Instance.NavigateToAsync(typeof(DrawingPage), true);
         }
 
-        protected void Button_Clicked(object sender, EventArgs args)
+        protected async void OnControlsClicked(object sender, EventArgs args)
         {
-            borderLabel.Margin = new Thickness(40);
-            fillColor = Color.Green;
-            canvas.Invalidate();
+            await NavigationService.Instance.NavigateToAsync(typeof(ControlsPage), true);
         }
     }
 }

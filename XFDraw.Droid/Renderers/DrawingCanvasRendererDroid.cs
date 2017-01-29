@@ -10,7 +10,7 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using XFDraw.Droid.Renderers;
-using XFDraw.Controls;
+using XFDraw;
 using Xamarin.Forms.Platform.Android;
 using Android.Graphics;
 using Xamarin.Forms;
@@ -29,7 +29,7 @@ namespace XFDraw.Droid.Renderers
         protected override void OnElementChanged(ElementChangedEventArgs<DrawingCanvas> e)
         {
             base.OnElementChanged(e);
-            if (Control == null)
+            if (Control == null && e.NewElement != null)
             {
                 SetNativeControl(new Android.Views.View(Context));
                 Invalidate();
@@ -40,9 +40,28 @@ namespace XFDraw.Droid.Renderers
             }
             if (e.NewElement != null)
             {
-                (e.NewElement as DrawingCanvas).InvalidateCallback = Invalidate;
+                (e.NewElement as DrawingCanvas).InvalidateCallback = InvalidateCanvas;
             }
         }
+
+        private void InvalidateCanvas()
+        {
+            try
+            {
+                Invalidate();
+            }
+            catch
+            {
+
+            }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (Element != null) Element.InvalidateCallback = null;
+            base.Dispose(disposing);
+        }
+
         protected override void OnDraw(Canvas canvas)
         {
             base.OnDraw(canvas);

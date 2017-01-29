@@ -12,8 +12,9 @@ namespace XFDrawSamples
         public App()
         {
             InitializeComponent();
-
-            MainPage = new XFDrawSamples.MainPage();
+            var nav = new NavigationPage(new XFDrawSamples.MainPage());
+            NavigationService.Init(nav);
+            MainPage = nav; 
         }
 
         protected override void OnStart()

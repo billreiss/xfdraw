@@ -21,23 +21,21 @@ namespace XFDraw.Droid.Renderers
     {
         public Canvas canvas;
         public XFDraw.RectangleF viewport;
-        Paint paint = new Paint();
         public float fontSize = 25;
         public float textHeight = 25;
         public float axisPadding = 10;
 
-        XColor strokeColor;
-        XColor fillColor;
-        XColor? fillColor2;
+        bool doFill = false;
+        bool doStroke = false;
 
-        Android.Graphics.Color aFill;
-        Android.Graphics.Color aStroke;
-        Android.Graphics.Color? aFill2;
-        Android.Graphics.Color aForeground;
+        Paint aFill = new Paint();
+        Paint aStroke = new Paint();
         static float fontScale = -1;
 
         public DrawingContextDroid()
         {
+            aFill.SetStyle(Paint.Style.Fill);
+            aStroke.SetStyle(Paint.Style.Stroke);
             if (fontScale < 0)
             {
                 var metrics = Resources.System.DisplayMetrics;
@@ -51,20 +49,74 @@ namespace XFDraw.Droid.Renderers
         {
             this.canvas = canvas;
         }
-        public override void SetStrokeColor(XColor color)
+        public override void SetStroke(Brush brush)
         {
-            if (strokeColor != color)
+            SetPaint(aStroke, brush, ref doStroke);
+        }
+
+        private void SetPaint(Paint paint, Brush brush, ref bool shouldPaint)
+        {
+            shouldPaint = true;
+            if (brush == null)
             {
-                strokeColor = color;
-                aStroke = strokeColor.ToAndroid();
+                shouldPaint = false;
+                return;
+            }
+            if (brush is SolidColorBrush)
+            {
+                var color = (brush as SolidColorBrush).Color.ToAndroid();
+                if (brush.Opacity != 1)
+                {
+                    color.A = (byte)(color.A * brush.Opacity);
+                }
+                if (color.A == 0)
+                {
+                    shouldPaint = false;
+                    return;
+                }
+                paint.Color = color;
             }
         }
-        public override void SetFillColor(XColor color)
+
+        public override void SetFill(Brush brush)
         {
-            if (fillColor != color)
+            SetPaint(aFill, brush, ref doFill);
+        }
+
+        public override void DrawArc(float cx, float cy, float radius, float startAngle, float endAngle, bool includeCenterInStroke, float strokeThickness)
+        {
+            cx = ToPixels(cx);
+            cy = ToPixels(cy);
+            radius = ToPixels(radius);
+            RectF rect = new RectF(cx - radius, cy - radius, cx + radius, cy + radius);
+            var sweepAngle = endAngle - startAngle;
+            if (sweepAngle < 0) sweepAngle += 360;
+            if (doFill)
             {
-                fillColor = color;
-                aFill = fillColor.ToAndroid();
+                canvas.DrawArc(rect, -startAngle, -sweepAngle, true, aFill);
+            }
+            if (doStroke)
+            {
+                aStroke.StrokeWidth = ToPixels(strokeThickness);
+                canvas.DrawArc(rect, -startAngle, -sweepAngle, includeCenterInStroke, aStroke);
+            }
+        }
+
+        public override void DrawEllipse(float cx, float cy, float radiusx, float radiusy, float strokeThickness)
+        {
+            cx = ToPixels(cx);
+            cy = ToPixels(cy);
+            radiusx = ToPixels(radiusx);
+            radiusy = ToPixels(radiusy);
+            var rect = new RectF(cx - radiusx, cy - radiusy, cx + radiusx, cy + radiusy);
+            if (doFill)
+            {
+                canvas.DrawOval(rect, aFill);
+            }
+            if (doStroke && strokeThickness > 0)
+            {
+                aStroke.StrokeWidth = ToPixels(strokeThickness);
+                canvas.DrawOval(rect, aStroke);
             }
         }
 
@@ -77,67 +129,60 @@ namespace XFDraw.Droid.Renderers
             radiusX = ToPixels(radiusX);
             radiusY = ToPixels(radiusY);
 
-            if (aFill.A > 0)
+            if (doFill)
             {
-                paint.Color = aFill;
-                paint.SetStyle(Paint.Style.Fill);
                 if (radiusX == 0 && radiusY == 0)
                 {
-                    canvas.DrawRect(new RectF(x, y, x + width, y + height), paint);
+                    canvas.DrawRect(new RectF(x, y, x + width, y + height), aFill);
                 }
                 else
                 {
-                    canvas.DrawRoundRect(new RectF(x, y, x + width, y + height), radiusX, radiusY, paint);
+                    canvas.DrawRoundRect(new RectF(x, y, x + width, y + height), radiusX, radiusY, aFill);
                 }
             }
-            if (strokeColor.A > 0)
+            if (doStroke && borderThickness > 0)
             {
-                paint.Color = aStroke;
-                paint.SetStyle(Paint.Style.Stroke);
-                paint.StrokeWidth = ToPixels(borderThickness);
+                aStroke.StrokeWidth = ToPixels(borderThickness);
                 if (radiusX == 0 && radiusY == 0)
                 {
-                    canvas.DrawRect(new RectF(x, y, x + width, y + height), paint);
+                    canvas.DrawRect(new RectF(x, y, x + width, y + height), aStroke);
                 }
                 else
                 {
-                    canvas.DrawRoundRect(new RectF(x, y, x + width, y + height), radiusX, radiusY, paint);
+                    canvas.DrawRoundRect(new RectF(x, y, x + width, y + height), radiusX, radiusY, aStroke);
                 }
             }
         }
 
         public override void DrawLine(float x1, float y1, float x2, float y2, float lineThickness)
         {
-            x1 = ToPixels(x1);
-            y1 = ToPixels(y1);
-            x2 = ToPixels(x2);
-            y2 = ToPixels(y2);
-            lineThickness = ToPixels(lineThickness);
-            paint.Color = aStroke;
-            paint.StrokeWidth = lineThickness;
-            paint.SetStyle(Paint.Style.Fill);
-            canvas.DrawLine(x1, y1, x2, y2, paint);
+            if (lineThickness > 0 && doStroke)
+            {
+                x1 = ToPixels(x1);
+                y1 = ToPixels(y1);
+                x2 = ToPixels(x2);
+                y2 = ToPixels(y2);
+                aStroke.StrokeWidth = ToPixels(lineThickness);
+                aStroke.SetStyle(Paint.Style.Fill);
+                canvas.DrawLine(x1, y1, x2, y2, aStroke);
+                aStroke.SetStyle(Paint.Style.Stroke);
+            }
         }
 
         public override void DrawPolygon(List<PointF> vertices, float lineThickness)
         {
-            paint.StrokeWidth = lineThickness;
-            paint.Color = aFill;
-            paint.SetStyle(Paint.Style.Fill);
-            DrawPathInternal(vertices, true);
+            if (doFill) DrawPathInternal(vertices, true, aFill);
             DrawPolyline(vertices, lineThickness, true);
         }
 
         public override void DrawPolyline(List<PointF> vertices, float lineThickness, bool isClosedPath = false)
         {
-            if (lineThickness == 0 || aStroke.A == 0) return;
-            paint.StrokeWidth = lineThickness;
-            paint.Color = aStroke;
-            paint.SetStyle(Paint.Style.Stroke);
-            DrawPathInternal(vertices, isClosedPath);
+            if (lineThickness == 0 || !doStroke) return;
+            aStroke.StrokeWidth = ToPixels(lineThickness);
+            if (doStroke) DrawPathInternal(vertices, isClosedPath, aStroke);
         }
 
-        private void DrawPathInternal(List<PointF> vertices, bool isClosedPath)
+        private void DrawPathInternal(List<PointF> vertices, bool isClosedPath, Paint paint)
         {
             Path path = new Path();
             var v1 = vertices.FirstOrDefault();

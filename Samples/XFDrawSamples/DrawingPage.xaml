@@ -1,8 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:local="clr-namespace:XFDraw"
-             xmlns:xfdraw="clr-namespace:XFDraw.Controls"
-             x:Class="XFDraw.MainPage">
-
+             xmlns:xfdraw="clr-namespace:XFDraw;assembly=XFDraw"
+             x:Class="XFDrawSamples.DrawingPage" Title="Drawing">
+  <xfdraw:DrawingCanvas Draw="Canvas_Draw"/>
 </ContentPage>

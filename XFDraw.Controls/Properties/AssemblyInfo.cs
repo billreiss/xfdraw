@@ -6,18 +6,15 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("XFDraw")]
+[assembly: AssemblyTitle("XFDraw.Controls")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("XFDraw")]
+[assembly: AssemblyProduct("XFDraw.Controls")]
 [assembly: AssemblyCopyright("Copyright ©  2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: NeutralResourcesLanguage("en")]
-[assembly: InternalsVisibleTo("XFDraw.Droid")]
-[assembly: InternalsVisibleTo("XFDraw.iOS")]
-[assembly: InternalsVisibleTo("XFDraw.UWP")]
 
 // Version information for an assembly consists of the following four values:
 //

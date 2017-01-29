@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Graphics.Canvas.UI.Xaml;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -20,7 +21,6 @@ namespace XFDrawSamples.UWP
         public MainPage()
         {
             this.InitializeComponent();
-
             LoadApplication(new XFDrawSamples.App());
         }
     }

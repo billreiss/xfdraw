@@ -128,6 +128,14 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\XFDraw.UWP\XFDraw.UWP.csproj">
+      <Project>{08419fbe-d5ed-4ebd-bf4b-6861923ba4de}</Project>
+      <Name>XFDraw.UWP</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\XFDraw\XFDraw.csproj">
+      <Project>{aa5b144e-d159-4f59-b30f-3e8cc2e54839}</Project>
+      <Name>XFDraw</Name>
+    </ProjectReference>
     <ProjectReference Include="..\XFDrawSamples\XFDrawSamples.csproj">
       <Project>{70b2d291-a6b2-49cf-90af-4d58f160a166}</Project>
       <Name>XFDrawSamples</Name>

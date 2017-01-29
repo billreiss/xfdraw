@@ -4,7 +4,7 @@ using System.Text;
 using CoreGraphics;
 using UIKit;
 using Xamarin.Forms.Platform.iOS;
-using XFDraw.Controls;
+using XFDraw;
 using XFDraw.iOS.Renderers;
 using Xamarin.Forms;
 
@@ -19,7 +19,7 @@ namespace XFDraw.iOS.Renderers
         {
             base.OnElementChanged(e);
 
-            if (Control == null)
+            if (Control == null && e.NewElement != null)
             {
                 SetNativeControl(new UIView());
             }

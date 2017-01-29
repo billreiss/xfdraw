@@ -97,7 +97,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Renderers\BorderRendererDroid.cs" />
     <Compile Include="Renderers\DrawingCanvasRendererDroid.cs" />
     <Compile Include="Renderers\DrawingContextDroid.cs" />
     <Compile Include="Resources\Resource.Designer.cs" />

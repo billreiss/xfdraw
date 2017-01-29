@@ -9,5 +9,11 @@ namespace XFDraw
 {
     public class Brush
     {
+        public double Opacity { get; set; }
+
+        public Brush()
+        {
+            Opacity = 1;
+        }
     }
 }
