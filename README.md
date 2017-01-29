@@ -11,12 +11,12 @@ For a more full featured library, take a look at SkiaSharp https://github.com/mo
 ### Android
 
 ![Image for Android]
-(https://raw.githubusercontent.com/billreiss/xfdraw/master/Screenshots/Android_Draw.png)
+(https://github.com/billreiss/XFDraw/tree/master/Screenshots/Android_Draw.png)
 
 ### iOS
 
 ![Image for iOS]
-(https://raw.githubusercontent.com/billreiss/xfdraw/master/Screenshots/iOS_Draw.png)
+(https://github.com/billreiss/XFDraw/tree/master/Screenshots/iOS_Draw.png)
 
 Coming soon:
 - Draw with gradients and images
