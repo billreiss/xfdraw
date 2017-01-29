@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text;
 using Xamarin.Forms;
 using Xamarin.Forms.Platform.Android;
+using XFDraw.Numerics;
 using XColor = Xamarin.Forms.Color;
 
 namespace XFDraw.Droid.Renderers
@@ -20,7 +21,6 @@ namespace XFDraw.Droid.Renderers
     internal class DrawingContextDroid : DrawingContext
     {
         public Canvas canvas;
-        public XFDraw.RectangleF viewport;
         public float fontSize = 25;
         public float textHeight = 25;
         public float axisPadding = 10;
@@ -169,20 +169,20 @@ namespace XFDraw.Droid.Renderers
             }
         }
 
-        public override void DrawPolygon(List<PointF> vertices, float lineThickness)
+        public override void DrawPolygon(List<Vector2> vertices, float lineThickness)
         {
             if (doFill) DrawPathInternal(vertices, true, aFill);
             DrawPolyline(vertices, lineThickness, true);
         }
 
-        public override void DrawPolyline(List<PointF> vertices, float lineThickness, bool isClosedPath = false)
+        public override void DrawPolyline(List<Vector2> vertices, float lineThickness, bool isClosedPath = false)
         {
             if (lineThickness == 0 || !doStroke) return;
             aStroke.StrokeWidth = ToPixels(lineThickness);
             if (doStroke) DrawPathInternal(vertices, isClosedPath, aStroke);
         }
 
-        private void DrawPathInternal(List<PointF> vertices, bool isClosedPath, Paint paint)
+        private void DrawPathInternal(List<Vector2> vertices, bool isClosedPath, Paint paint)
         {
             Path path = new Path();
             var v1 = vertices.FirstOrDefault();

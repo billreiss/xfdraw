@@ -4,7 +4,6 @@ using Microsoft.Graphics.Canvas.Geometry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -22,22 +21,42 @@ namespace XFDraw.UWP.Renderers
 
         public override void DrawArc(float cx, float cy, float radius, float startAngle, float endAngle, bool includeCenterInStroke, float strokeThickness)
         {
-            var center = new Vector2(cx, cy);
+            var center = new System.Numerics.Vector2(cx, cy);
             var start = -ToRadians(startAngle) + (float)(Math.PI * 2);
             var end = -ToRadians(endAngle) + (float)(Math.PI * 2);
-            CanvasPathBuilder builder = new CanvasPathBuilder(session);
-            Matrix3x2 rotation = Matrix3x2.CreateRotation(end);
-            builder.BeginFigure(center + Vector2.Transform(new Vector2(radius, 0), rotation));
-            builder.AddArc(center, radius, radius, end, start - end);
-            builder.EndFigure(CanvasFigureLoop.Open);
-            var geom = CanvasGeometry.CreatePath(builder);
+            if (uFill != null)
+            {
+                CanvasPathBuilder builder = new CanvasPathBuilder(session);
+                builder.BeginFigure(center);
+                builder.AddArc(center, radius, radius, end, start - end);
+                builder.EndFigure(CanvasFigureLoop.Closed);
+                var geom = CanvasGeometry.CreatePath(builder);
+                session.FillGeometry(geom, uFill);
+            }
             if (uStroke != null && strokeThickness > 0)
+            {
+                CanvasPathBuilder builder = new CanvasPathBuilder(session);
+                if (!includeCenterInStroke)
+                {
+                    var rotation = System.Numerics.Matrix3x2.CreateRotation(end);
+                    builder.BeginFigure(center + System.Numerics.Vector2.Transform(new System.Numerics.Vector2(radius, 0), rotation));
+                    builder.AddArc(center, radius, radius, end, start - end);
+                    builder.EndFigure(CanvasFigureLoop.Open);
+                }
+                else
+                {
+                    builder.BeginFigure(center);
+                    builder.AddArc(center, radius, radius, end, start - end);
+                    builder.EndFigure(CanvasFigureLoop.Closed);
+                }
+                var geom = CanvasGeometry.CreatePath(builder);
                 session.DrawGeometry(geom, uStroke, strokeThickness);
+            }
         }
 
         public override void DrawEllipse(float cx, float cy, float radiusx, float radiusy, float strokeThickness)
         {
-            var center = new Vector2(cx, cy);
+            var center = new System.Numerics.Vector2(cx, cy);
             var geom = CanvasGeometry.CreateEllipse(session, center, radiusx, radiusy);
             if (uFill != null)
                 session.FillGeometry(geom, uFill);
@@ -50,7 +69,7 @@ namespace XFDraw.UWP.Renderers
             if (uStroke != null) session.DrawLine(x1, y1, x2, y2, uStroke, strokeThickness);
         }
 
-        public override void DrawPolygon(List<PointF> vertices, float strokeThickness)
+        public override void DrawPolygon(List<XFDraw.Numerics.Vector2> vertices, float strokeThickness)
         {
             var v0 = vertices.FirstOrDefault();
             if (v0 == null) return;
@@ -72,7 +91,7 @@ namespace XFDraw.UWP.Renderers
             }
         }
 
-        public override void DrawPolyline(List<PointF> vertices, float strokeThickness, bool isClosedPath = false)
+        public override void DrawPolyline(List<XFDraw.Numerics.Vector2> vertices, float strokeThickness, bool isClosedPath = false)
         {
             var v0 = vertices.FirstOrDefault();
             if (v0 == null) return;

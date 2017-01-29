@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xamarin.Forms;
+using XFDraw.Numerics;
 
 namespace XFDraw
 {
@@ -73,7 +74,7 @@ namespace XFDraw
             DrawEllipse(cx, cy, radius, radius, strokeThickness);
         }
 
-        float ratio = (float)(Math.PI / 180);
+        double ratio = (double)(Math.PI / 180);
         protected float ToRadians(float degrees)
         {
             return (float)(degrees * ratio);
@@ -87,7 +88,7 @@ namespace XFDraw
         public abstract void SetStroke(Brush brush);
         public abstract void SetFill(Brush brush);
         public abstract void DrawLine(float x1, float y1, float x2, float y2, float strokeThickness);
-        public abstract void DrawPolygon(List<PointF> vertices, float strokeThickness);
-        public abstract void DrawPolyline(List<PointF> vertices, float strokeThickness, bool isClosedPath = false);
+        public abstract void DrawPolygon(List<Vector2> vertices, float strokeThickness);
+        public abstract void DrawPolyline(List<Vector2> vertices, float strokeThickness, bool isClosedPath = false);
     }
 }

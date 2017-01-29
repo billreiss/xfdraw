@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XFDraw.Numerics;
 
-namespace XFDraw
+namespace XFDraw.Numerics
 {
     public struct RectangleF
     {
@@ -12,7 +13,7 @@ namespace XFDraw
         public float Y;
         public float Width;
         public float Height;
-        public RectangleF(PointF topLeft, PointF bottomRight)
+        public RectangleF(Vector2 topLeft, Vector2 bottomRight)
         {
             X = topLeft.X;
             Y = topLeft.Y;

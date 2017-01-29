@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 
 using Xamarin.Forms;
 using XFDraw;
+using XFDraw.Numerics;
 
 namespace XFDrawSamples
 {
     public partial class DrawingPage : ContentPage
     {
-        List<PointF> polyLine = new List<PointF>() { new PointF(25, 225), new PointF(45, 200), new PointF(65, 275), new PointF(85, 205), new PointF(105, 225) };
+        List<Vector2> polyLine = new List<Vector2>() { new Vector2(25, 225), new Vector2(45, 200), new Vector2(65, 275), new Vector2(85, 205), new Vector2(105, 225) };
         public DrawingPage()
         {
             InitializeComponent();
@@ -23,10 +24,14 @@ namespace XFDrawSamples
             ctx.SetStrokeColor(Color.Red);
             ctx.SetFillColor(Color.Blue);
             ctx.DrawEllipse(75, 50, 50, 30, 5);
+            ctx.DrawArc(75, 135, 40, 0, 90, true, 10);
             ctx.SetFill(null);
-            ctx.DrawArc(75, 150, 50, 0, 90, false, 10);
             ctx.SetStrokeColor(Color.Blue);
-            ctx.DrawArc(75, 150, 50, 90, 180, false, 10);
+            ctx.DrawArc(75, 135, 40, 90, 180, false, 10);
+            ctx.SetStrokeColor(Color.Orange);
+            ctx.DrawArc(75, 135, 40, 180, 270, false, 10);
+            ctx.SetStrokeColor(Color.Teal);
+            ctx.DrawArc(75, 135, 40, 270, 360, false, 10);
             ctx.SetStrokeColor(Color.Green);
             ctx.SetFillColor(Color.Navy);
             ctx.DrawRect(200, 25, 100, 50, 10);

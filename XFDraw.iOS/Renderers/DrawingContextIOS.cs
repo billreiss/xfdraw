@@ -8,6 +8,7 @@ using Xamarin.Forms;
 using Xamarin.Forms.Platform.iOS;
 using System.Linq;
 using UIKit;
+using XFDraw.Numerics;
 
 namespace XFDraw.iOS.Renderers
 {
@@ -132,7 +133,7 @@ namespace XFDraw.iOS.Renderers
             }
         }
 
-        public override void DrawPolygon(List<PointF> vertices, float strokeThickness)
+        public override void DrawPolygon(List<Vector2> vertices, float strokeThickness)
         {
             cgContext.SetLineWidth((nfloat)strokeThickness);
             var stroke = aStroke;
@@ -148,7 +149,7 @@ namespace XFDraw.iOS.Renderers
             DrawPolyline(vertices, strokeThickness, true);
         }
 
-        public override void DrawPolyline(List<PointF> vertices, float strokeThickness, bool isClosedPath = false)
+        public override void DrawPolyline(List<Vector2> vertices, float strokeThickness, bool isClosedPath = false)
         {
             if (strokeThickness == 0 || (float)aStroke.Alpha == 0 || !vertices.Any()) return;
             cgContext.SetLineWidth((nfloat)strokeThickness);
