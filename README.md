@@ -10,11 +10,11 @@ For a more full featured library, take a look at SkiaSharp https://github.com/mo
 
 ### Android
 
-![Image for Android](/Screenshots/Android_Draw.PNG)
+<img src="/Screenshots/Android_Draw.PNG"/>
 
 ### iOS
 
-![Image for iOS](/Screenshots/iOS_Draw.PNG)
+<img src="/Screenshots/iOS_Draw.PNG"/>
 
 Coming soon:
 - Draw with gradients and images
