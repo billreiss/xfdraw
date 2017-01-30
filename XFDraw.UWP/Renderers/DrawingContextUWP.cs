@@ -156,6 +156,13 @@ namespace XFDraw.UWP.Renderers
             {
                 (brush as CanvasLinearGradientBrush).Transform = System.Numerics.Matrix3x2.CreateScale(width, height) * System.Numerics.Matrix3x2.CreateTranslation(x, y);
             }
+            else if (brush is CanvasRadialGradientBrush)
+            {
+                float maxSize = Math.Max(width, height);
+                var trans = new Vector2(x, y) + new Vector2(width / 2, height / 2) - new Vector2(maxSize, maxSize) / 2;
+
+                (brush as CanvasRadialGradientBrush).Transform = System.Numerics.Matrix3x2.CreateScale(maxSize) * System.Numerics.Matrix3x2.CreateTranslation(trans.X, trans.Y);
+            }
             return brush;
         }
 
@@ -173,6 +180,15 @@ namespace XFDraw.UWP.Renderers
                 clgb.StartPoint = new System.Numerics.Vector2(lb.StartPoint.X, lb.StartPoint.Y);
                 clgb.EndPoint = new System.Numerics.Vector2(lb.EndPoint.X, lb.EndPoint.Y);
                 uFill = clgb;
+            }
+            else if (brush is RadialGradientBrush)
+            {
+                var rb = brush as RadialGradientBrush;
+                var crgb = new CanvasRadialGradientBrush(session, rb.GradientStops.Select(s => new CanvasGradientStop() { Position = (float)s.Offset, Color = ToWin2DColor(s.Color) }).ToArray());
+                crgb.Center = new System.Numerics.Vector2(rb.Center.X, rb.Center.Y);
+                crgb.RadiusX = rb.Radius;
+                crgb.RadiusY = rb.Radius;
+                uFill = crgb;
             }
             else
             {
@@ -199,6 +215,15 @@ namespace XFDraw.UWP.Renderers
                 clgb.StartPoint = new System.Numerics.Vector2(lb.StartPoint.X, lb.StartPoint.Y);
                 clgb.EndPoint = new System.Numerics.Vector2(lb.EndPoint.X, lb.EndPoint.Y);
                 uStroke = clgb;
+            }
+            else if (brush is RadialGradientBrush)
+            {
+                var rb = brush as RadialGradientBrush;
+                var crgb = new CanvasRadialGradientBrush(session, rb.GradientStops.Select(s => new CanvasGradientStop() { Position = (float)s.Offset, Color = ToWin2DColor(s.Color) }).ToArray());
+                crgb.Center = new System.Numerics.Vector2(rb.Center.X, rb.Center.Y);
+                crgb.RadiusX = rb.Radius;
+                crgb.RadiusY = rb.Radius;
+                uStroke = crgb;
             }
             else
             {

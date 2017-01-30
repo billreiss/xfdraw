@@ -30,8 +30,8 @@ namespace XFDraw.Droid.Renderers
 
         Paint aFill = new Paint();
         Paint aStroke = new Paint();
-        LinearGradientBrush gFill;
-        LinearGradientBrush gStroke;
+        GradientBrush gFill;
+        GradientBrush gStroke;
 
         static float fontScale = -1;
 
@@ -87,17 +87,17 @@ namespace XFDraw.Droid.Renderers
                     gFill = null;
                 }
             }
-            else if (brush is LinearGradientBrush)
+            else if (brush is GradientBrush)
             {
-                var lgb = brush as LinearGradientBrush;
+                var gb = brush as GradientBrush;
                 shouldPaint = true;
                 if (isStroke)
                 {
-                    gStroke = lgb;
+                    gStroke = gb;
                 }
                 else
                 {
-                    gFill = lgb;
+                    gFill = gb;
                 }
             }
         }
@@ -228,16 +228,38 @@ namespace XFDraw.Droid.Renderers
             }
         }
 
-        private void ApplyGradient(Paint paint, LinearGradientBrush brush, RectF rect, bool needsConvertToPixels = false)
+        private void ApplyGradient(Paint paint, GradientBrush brush, RectF rect, bool needsConvertToPixels = false)
         {
-            var transform = Matrix3x2.CreateScale(rect.Width(), rect.Height()) * Matrix3x2.CreateTranslation(rect.Left, rect.Top);
-            var start = Vector2.Transform(brush.StartPoint, transform);
-            var end = Vector2.Transform(brush.EndPoint, transform);
-            var gradient = new LinearGradient(start.X, start.Y, end.X, end.Y, brush.GradientStops.Select(g => g.Color.ToAndroid().ToArgb()).ToArray(), brush.GradientStops.Select(g => (float)g.Offset).ToArray(), Shader.TileMode.Clamp);
-            paint.SetShader(gradient);
+            Matrix3x2 transform;
+            if (!needsConvertToPixels)
+            {
+                transform = Matrix3x2.CreateScale(rect.Width(), rect.Height()) * Matrix3x2.CreateTranslation(rect.Left, rect.Top);
+            }
+            else
+            {
+                transform = Matrix3x2.CreateScale(ToPixels(rect.Width()), ToPixels(rect.Height())) * Matrix3x2.CreateTranslation(ToPixels(rect.Left), ToPixels(rect.Top));
+            }
+            if (brush is LinearGradientBrush)
+            {
+                var lgb = brush as LinearGradientBrush;
+                var start = Vector2.Transform(lgb.StartPoint, transform);
+                var end = Vector2.Transform(lgb.EndPoint, transform);
+                var gradient = new LinearGradient(start.X, start.Y, end.X, end.Y, brush.GradientStops.Select(g => g.Color.ToAndroid().ToArgb()).ToArray(), brush.GradientStops.Select(g => (float)g.Offset).ToArray(), Shader.TileMode.Clamp);
+                paint.SetShader(gradient);
+                return;
+            }
+            else if (brush is RadialGradientBrush)
+            {
+                var rgb = brush as RadialGradientBrush;
+                var center = Vector2.Transform(rgb.Center, transform);
+                var radius = Math.Max(rect.Width(), rect.Height()) * rgb.Radius;
+                if (needsConvertToPixels) radius = ToPixels(radius);
+                var gradient = new RadialGradient(center.X, center.Y, radius, brush.GradientStops.Select(g => g.Color.ToAndroid().ToArgb()).ToArray(), brush.GradientStops.Select(g => (float)g.Offset).ToArray(), Shader.TileMode.Clamp);
+                paint.SetShader(gradient);
+            }
         }
 
-        private void ApplyGradient(Paint paint, LinearGradientBrush brush, RectangleF rect, bool needsConvertToPixels = false)
+        private void ApplyGradient(Paint paint, GradientBrush brush, RectangleF rect, bool needsConvertToPixels = false)
         {
             Matrix3x2 transform;
             if (!needsConvertToPixels)
@@ -248,11 +270,26 @@ namespace XFDraw.Droid.Renderers
             {
                 transform = Matrix3x2.CreateScale(ToPixels(rect.Width), ToPixels(rect.Height)) * Matrix3x2.CreateTranslation(ToPixels(rect.Left), ToPixels(rect.Top));
             }
-            var start = Vector2.Transform(brush.StartPoint, transform);
-            var end = Vector2.Transform(brush.EndPoint, transform);
-            var gradient = new LinearGradient(start.X, start.Y, end.X, end.Y, brush.GradientStops.Select(g => g.Color.ToAndroid().ToArgb()).ToArray(), brush.GradientStops.Select(g => (float)g.Offset).ToArray(), Shader.TileMode.Clamp);
-            paint.SetShader(gradient);
+            if (brush is LinearGradientBrush)
+            {
+                var lgb = brush as LinearGradientBrush;
+                var start = Vector2.Transform(lgb.StartPoint, transform);
+                var end = Vector2.Transform(lgb.EndPoint, transform);
+                var gradient = new LinearGradient(start.X, start.Y, end.X, end.Y, brush.GradientStops.Select(g => g.Color.ToAndroid().ToArgb()).ToArray(), brush.GradientStops.Select(g => (float)g.Offset).ToArray(), Shader.TileMode.Clamp);
+                paint.SetShader(gradient);
+            }
+            else if (brush is RadialGradientBrush)
+            {
+                var rgb = brush as RadialGradientBrush;
+                var center = Vector2.Transform(rgb.Center, transform);
+                var radius = Math.Max(rect.Width, rect.Height) * rgb.Radius;
+                if (needsConvertToPixels) radius = ToPixels(radius);
+                var gradient = new RadialGradient(center.X, center.Y, radius, brush.GradientStops.Select(g => g.Color.ToAndroid().ToArgb()).ToArray(), brush.GradientStops.Select(g => (float)g.Offset).ToArray(), Shader.TileMode.Clamp);
+                paint.SetShader(gradient);
+            }
+
         }
+
         public override void DrawLine(float x1, float y1, float x2, float y2, float lineThickness)
         {
             if (lineThickness > 0 && doStroke)

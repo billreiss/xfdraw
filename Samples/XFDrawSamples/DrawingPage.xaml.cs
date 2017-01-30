@@ -38,7 +38,7 @@ namespace XFDrawSamples
             sgb.GradientStops.Add(new GradientStop() { Color = Color.Yellow, Offset = 0 });
             sgb.GradientStops.Add(new GradientStop() { Color = Color.Green, Offset = 1 });
             ctx.SetStroke(sgb);
-            var fgb = new LinearGradientBrush();
+            var fgb = new RadialGradientBrush();
             fgb.GradientStops.Add(new GradientStop() { Color = Color.Red, Offset = 0 });
             fgb.GradientStops.Add(new GradientStop() { Color = Color.Blue, Offset = 1 });
             ctx.SetFill(fgb);

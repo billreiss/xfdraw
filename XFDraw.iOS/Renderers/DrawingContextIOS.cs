@@ -32,6 +32,8 @@ namespace XFDraw.iOS.Renderers
         CoreGraphics.CGGradient gStroke;
         LinearGradientBrush lgStroke;
         LinearGradientBrush lgFill;
+        RadialGradientBrush rgStroke;
+        RadialGradientBrush rgFill;
 
         public override void DrawEllipse(float cx, float cy, float radiusx, float radiusy, float strokeThickness)
         {
@@ -80,6 +82,7 @@ namespace XFDraw.iOS.Renderers
             {
                 gStroke = SetGradient(brush);
                 lgStroke = brush as LinearGradientBrush;
+                rgStroke = brush as RadialGradientBrush;
                 aStroke = null;
             }
             else
@@ -102,6 +105,7 @@ namespace XFDraw.iOS.Renderers
             {
                 gFill = SetGradient(brush);
                 lgFill = brush as LinearGradientBrush;
+                rgFill = brush as RadialGradientBrush;
                 aFill = null;
             }
             else
@@ -147,7 +151,6 @@ namespace XFDraw.iOS.Renderers
             cgContext.SetLineWidth((nfloat)strokeThickness);
             if (doStroke && strokeThickness > 0)
             {
-                cgContext.SetStrokeColor(aStroke);
                 CoreGraphics.CGPath path = new CoreGraphics.CGPath();
                 path.AddLines(new CGPoint[] { new CGPoint(x1, y1), new CGPoint(x2, y2) });
                 StrokePath(strokeThickness, path);
@@ -185,10 +188,22 @@ namespace XFDraw.iOS.Renderers
                 cgContext.ClosePath();
                 cgContext.Clip();
                 var bounds = path.BoundingBox;
-                Matrix3x2 transform = Matrix3x2.CreateScale((float)bounds.Width, (float)bounds.Height) * Matrix3x2.CreateTranslation((float)bounds.X, (float)bounds.Y);
-                var s = Vector2.Transform(lgFill.StartPoint, transform);
-                var e = Vector2.Transform(lgFill.EndPoint, transform);
-                cgContext.DrawLinearGradient(gFill, new CGPoint(s.X, s.Y), new CGPoint(e.X, e.Y), CGGradientDrawingOptions.DrawsBeforeStartLocation | CGGradientDrawingOptions.DrawsAfterEndLocation);
+                if (lgFill != null)
+                {
+                    Matrix3x2 transform = Matrix3x2.CreateScale((float)bounds.Width, (float)bounds.Height) * Matrix3x2.CreateTranslation((float)bounds.X, (float)bounds.Y);
+                    var s = Vector2.Transform(lgFill.StartPoint, transform);
+                    var e = Vector2.Transform(lgFill.EndPoint, transform);
+                    cgContext.DrawLinearGradient(gFill, new CGPoint(s.X, s.Y), new CGPoint(e.X, e.Y), CGGradientDrawingOptions.DrawsBeforeStartLocation | CGGradientDrawingOptions.DrawsAfterEndLocation);
+                }
+                else if (rgFill != null)
+                {
+                    float maxSize = (float)Math.Max(bounds.Width, bounds.Height);
+                    var radius = rgFill.Radius * maxSize;
+                    var trans = new Vector2((float)bounds.X, (float)bounds.Y) + new Vector2((float)bounds.Width / 2, (float)bounds.Height / 2) - new Vector2(maxSize, maxSize) / 2;
+                    Matrix3x2 transform = Matrix3x2.CreateScale(maxSize) * Matrix3x2.CreateTranslation(trans);
+                    var c = Vector2.Transform(rgFill.Center, transform);
+                    cgContext.DrawRadialGradient(gFill, new CGPoint(c.X, c.Y), 0, new CGPoint(c.X, c.Y), radius, CGGradientDrawingOptions.DrawsAfterEndLocation | CGGradientDrawingOptions.DrawsBeforeStartLocation);
+                }
                 cgContext.RestoreState();
             }
             else
@@ -210,10 +225,22 @@ namespace XFDraw.iOS.Renderers
                 cgContext.AddPath(strokedPath);
                 cgContext.Clip();
                 var bounds = strokedPath.BoundingBox;
-                Matrix3x2 transform = Matrix3x2.CreateScale((float)bounds.Width, (float)bounds.Height) * Matrix3x2.CreateTranslation((float)bounds.X, (float)bounds.Y);
-                var s = Vector2.Transform(lgStroke.StartPoint, transform);
-                var e = Vector2.Transform(lgStroke.EndPoint, transform);
-                cgContext.DrawLinearGradient(gStroke, new CGPoint(s.X, s.Y), new CGPoint(e.X, e.Y), CGGradientDrawingOptions.DrawsBeforeStartLocation | CGGradientDrawingOptions.DrawsAfterEndLocation);
+                if (lgStroke != null)
+                {
+                    Matrix3x2 transform = Matrix3x2.CreateScale((float)bounds.Width, (float)bounds.Height) * Matrix3x2.CreateTranslation((float)bounds.X, (float)bounds.Y);
+                    var s = Vector2.Transform(lgStroke.StartPoint, transform);
+                    var e = Vector2.Transform(lgStroke.EndPoint, transform);
+                    cgContext.DrawLinearGradient(gStroke, new CGPoint(s.X, s.Y), new CGPoint(e.X, e.Y), CGGradientDrawingOptions.DrawsBeforeStartLocation | CGGradientDrawingOptions.DrawsAfterEndLocation);
+                }
+                else if (rgStroke != null)
+                {
+                    float maxSize = (float)Math.Max(bounds.Width, bounds.Height);
+                    var radius = rgStroke.Radius * maxSize;
+                    var trans = new Vector2((float)bounds.X, (float)bounds.Y) + new Vector2((float)bounds.Width / 2, (float)bounds.Height / 2) - new Vector2(maxSize, maxSize) / 2;
+                    Matrix3x2 transform = Matrix3x2.CreateScale(maxSize) * Matrix3x2.CreateTranslation(trans);
+                    var c = Vector2.Transform(rgStroke.Center, transform);
+                    cgContext.DrawRadialGradient(gStroke, new CGPoint(c.X, c.Y), 0, new CGPoint(c.X, c.Y), radius, CGGradientDrawingOptions.DrawsAfterEndLocation | CGGradientDrawingOptions.DrawsBeforeStartLocation);
+                }
                 cgContext.RestoreState();
             }
             else

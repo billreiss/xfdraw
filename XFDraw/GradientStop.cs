@@ -10,6 +10,6 @@ namespace XFDraw
     public class GradientStop
     {
         public Color Color { get; set; }
-        public double Offset { get; set; }
+        public float Offset { get; set; }
     }
 }
