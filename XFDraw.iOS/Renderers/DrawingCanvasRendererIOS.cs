@@ -43,7 +43,7 @@ namespace XFDraw.iOS.Renderers
             base.Draw(rect);
             using (CGContext g = UIGraphics.GetCurrentContext())
             {
-                drawingContext.BeginDraw(g);
+                drawingContext.BeginDraw(g, Control);
                 Element.DrawingCallback(drawingContext);
             }
         }

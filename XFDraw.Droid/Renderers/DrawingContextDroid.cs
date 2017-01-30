@@ -30,6 +30,9 @@ namespace XFDraw.Droid.Renderers
 
         Paint aFill = new Paint();
         Paint aStroke = new Paint();
+        LinearGradientBrush gFill;
+        LinearGradientBrush gStroke;
+
         static float fontScale = -1;
 
         public DrawingContextDroid()
@@ -51,10 +54,10 @@ namespace XFDraw.Droid.Renderers
         }
         public override void SetStroke(Brush brush)
         {
-            SetPaint(aStroke, brush, ref doStroke);
+            SetPaint(aStroke, brush, true, ref doStroke);
         }
 
-        private void SetPaint(Paint paint, Brush brush, ref bool shouldPaint)
+        private void SetPaint(Paint paint, Brush brush, bool isStroke, ref bool shouldPaint)
         {
             shouldPaint = true;
             if (brush == null)
@@ -75,12 +78,33 @@ namespace XFDraw.Droid.Renderers
                     return;
                 }
                 paint.Color = color;
+                if (isStroke)
+                {
+                    gStroke = null;
+                }
+                else
+                {
+                    gFill = null;
+                }
+            }
+            else if (brush is LinearGradientBrush)
+            {
+                var lgb = brush as LinearGradientBrush;
+                shouldPaint = true;
+                if (isStroke)
+                {
+                    gStroke = lgb;
+                }
+                else
+                {
+                    gFill = lgb;
+                }
             }
         }
 
         public override void SetFill(Brush brush)
         {
-            SetPaint(aFill, brush, ref doFill);
+            SetPaint(aFill, brush, false, ref doFill);
         }
 
         public override void DrawArc(float cx, float cy, float radius, float startAngle, float endAngle, bool includeCenterInStroke, float strokeThickness)
@@ -93,12 +117,30 @@ namespace XFDraw.Droid.Renderers
             if (sweepAngle < 0) sweepAngle += 360;
             if (doFill)
             {
+                if (gFill != null)
+                {
+                    ApplyGradient(aFill, gFill, rect);
+                }
                 canvas.DrawArc(rect, -startAngle, -sweepAngle, true, aFill);
+                if (gFill != null)
+                {
+                    aFill.SetShader(null);
+                }
             }
             if (doStroke)
             {
+                if (gStroke != null)
+                {
+                    RectangleF r = new RectangleF(rect.Left, rect.Top, rect.Width(), rect.Height());
+                    r = r.Expand(strokeThickness / 2);
+                    ApplyGradient(aStroke, gStroke, r);
+                }
                 aStroke.StrokeWidth = ToPixels(strokeThickness);
                 canvas.DrawArc(rect, -startAngle, -sweepAngle, includeCenterInStroke, aStroke);
+                if (gStroke != null)
+                {
+                    aStroke.SetShader(null);
+                }
             }
         }
 
@@ -111,12 +153,30 @@ namespace XFDraw.Droid.Renderers
             var rect = new RectF(cx - radiusx, cy - radiusy, cx + radiusx, cy + radiusy);
             if (doFill)
             {
+                if (gFill != null)
+                {
+                    ApplyGradient(aFill, gFill, rect);
+                }
                 canvas.DrawOval(rect, aFill);
+                if (gFill != null)
+                {
+                    aFill.SetShader(null);
+                }
             }
             if (doStroke && strokeThickness > 0)
             {
+                if (gStroke != null)
+                {
+                    RectangleF r = new RectangleF(rect.Left, rect.Top, rect.Width(), rect.Height());
+                    r = r.Expand(strokeThickness / 2);
+                    ApplyGradient(aStroke, gStroke, r);
+                }
                 aStroke.StrokeWidth = ToPixels(strokeThickness);
                 canvas.DrawOval(rect, aStroke);
+                if (gStroke != null)
+                {
+                    aStroke.SetShader(null);
+                }
             }
         }
 
@@ -131,6 +191,12 @@ namespace XFDraw.Droid.Renderers
 
             if (doFill)
             {
+                if (gFill != null)
+                {
+                    RectangleF rect = new RectangleF(x, y, width, height);
+                    ApplyGradient(aFill, gFill, rect);
+                }
+
                 if (radiusX == 0 && radiusY == 0)
                 {
                     canvas.DrawRect(new RectF(x, y, x + width, y + height), aFill);
@@ -139,10 +205,17 @@ namespace XFDraw.Droid.Renderers
                 {
                     canvas.DrawRoundRect(new RectF(x, y, x + width, y + height), radiusX, radiusY, aFill);
                 }
+                if (gFill != null) aFill.SetShader(null);
             }
             if (doStroke && borderThickness > 0)
             {
                 aStroke.StrokeWidth = ToPixels(borderThickness);
+                if (gStroke != null)
+                {
+                    RectangleF rect = new RectangleF(x, y, width, height);
+                    rect  = rect.Expand(borderThickness / 2);
+                    ApplyGradient(aStroke, gStroke, rect);
+                }
                 if (radiusX == 0 && radiusY == 0)
                 {
                     canvas.DrawRect(new RectF(x, y, x + width, y + height), aStroke);
@@ -151,9 +224,35 @@ namespace XFDraw.Droid.Renderers
                 {
                     canvas.DrawRoundRect(new RectF(x, y, x + width, y + height), radiusX, radiusY, aStroke);
                 }
+                if (gStroke != null) aStroke.SetShader(null);
             }
         }
 
+        private void ApplyGradient(Paint paint, LinearGradientBrush brush, RectF rect, bool needsConvertToPixels = false)
+        {
+            var transform = Matrix3x2.CreateScale(rect.Width(), rect.Height()) * Matrix3x2.CreateTranslation(rect.Left, rect.Top);
+            var start = Vector2.Transform(brush.StartPoint, transform);
+            var end = Vector2.Transform(brush.EndPoint, transform);
+            var gradient = new LinearGradient(start.X, start.Y, end.X, end.Y, brush.GradientStops.Select(g => g.Color.ToAndroid().ToArgb()).ToArray(), brush.GradientStops.Select(g => (float)g.Offset).ToArray(), Shader.TileMode.Clamp);
+            paint.SetShader(gradient);
+        }
+
+        private void ApplyGradient(Paint paint, LinearGradientBrush brush, RectangleF rect, bool needsConvertToPixels = false)
+        {
+            Matrix3x2 transform;
+            if (!needsConvertToPixels)
+            {
+                transform = Matrix3x2.CreateScale(rect.Width, rect.Height) * Matrix3x2.CreateTranslation(rect.Left, rect.Top);
+            }
+            else
+            {
+                transform = Matrix3x2.CreateScale(ToPixels(rect.Width), ToPixels(rect.Height)) * Matrix3x2.CreateTranslation(ToPixels(rect.Left), ToPixels(rect.Top));
+            }
+            var start = Vector2.Transform(brush.StartPoint, transform);
+            var end = Vector2.Transform(brush.EndPoint, transform);
+            var gradient = new LinearGradient(start.X, start.Y, end.X, end.Y, brush.GradientStops.Select(g => g.Color.ToAndroid().ToArgb()).ToArray(), brush.GradientStops.Select(g => (float)g.Offset).ToArray(), Shader.TileMode.Clamp);
+            paint.SetShader(gradient);
+        }
         public override void DrawLine(float x1, float y1, float x2, float y2, float lineThickness)
         {
             if (lineThickness > 0 && doStroke)
@@ -163,23 +262,49 @@ namespace XFDraw.Droid.Renderers
                 x2 = ToPixels(x2);
                 y2 = ToPixels(y2);
                 aStroke.StrokeWidth = ToPixels(lineThickness);
+                if (gStroke != null)
+                {
+                    RectangleF rect = FindBoundingBox(new Vector2[] { new Vector2(x1, y1), new Vector2(x2, y2) }, 0);
+                    rect = rect.Expand(lineThickness / 2);
+                    ApplyGradient(aStroke, gStroke, rect);
+                }
                 aStroke.SetStyle(Paint.Style.Fill);
                 canvas.DrawLine(x1, y1, x2, y2, aStroke);
                 aStroke.SetStyle(Paint.Style.Stroke);
+                if (gStroke != null)
+                {
+                    aStroke.SetShader(null);
+                }
             }
         }
 
         public override void DrawPolygon(List<Vector2> vertices, float lineThickness)
         {
-            if (doFill) DrawPathInternal(vertices, true, aFill);
+            if (doFill)
+            {
+                if (gFill != null)
+                {
+                    RectangleF rect = FindBoundingBox(vertices, 0);
+                    ApplyGradient(aFill, gFill, rect, true);
+                }
+                DrawPathInternal(vertices, true, aFill);
+                if (gFill != null) aFill.SetShader(null);
+            }
+
             DrawPolyline(vertices, lineThickness, true);
         }
 
         public override void DrawPolyline(List<Vector2> vertices, float lineThickness, bool isClosedPath = false)
         {
             if (lineThickness == 0 || !doStroke) return;
+            if (gStroke != null)
+            {
+                RectangleF rect = FindBoundingBox(vertices, lineThickness);
+                ApplyGradient(aStroke, gStroke, rect, true);
+            }
             aStroke.StrokeWidth = ToPixels(lineThickness);
-            if (doStroke) DrawPathInternal(vertices, isClosedPath, aStroke);
+            DrawPathInternal(vertices, isClosedPath, aStroke);
+            if (gStroke != null) aStroke.SetShader(null);
         }
 
         private void DrawPathInternal(List<Vector2> vertices, bool isClosedPath, Paint paint)

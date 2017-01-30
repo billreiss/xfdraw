@@ -60,5 +60,10 @@ namespace XFDraw.Numerics
                 return X;
             }
         }
+
+        public RectangleF Expand(float expandBy)
+        {
+            return new RectangleF(this.X - expandBy, this.Y - expandBy, this.Width + expandBy * 2, this.Height + expandBy * 2);
+        }
     }
 }

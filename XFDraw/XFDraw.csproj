@@ -39,6 +39,9 @@
     <Compile Include="DrawingCanvas.cs" />
     <Compile Include="DrawEventArgs.cs" />
     <Compile Include="DrawingContext.cs" />
+    <Compile Include="GradientBrush.cs" />
+    <Compile Include="GradientStop.cs" />
+    <Compile Include="LinearGradientBrush.cs" />
     <Compile Include="Numerics\LineF.cs" />
     <Compile Include="Numerics\Matrix3x2.cs" />
     <Compile Include="Numerics\Vector2.cs" />

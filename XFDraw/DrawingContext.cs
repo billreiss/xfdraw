@@ -90,5 +90,21 @@ namespace XFDraw
         public abstract void DrawLine(float x1, float y1, float x2, float y2, float strokeThickness);
         public abstract void DrawPolygon(List<Vector2> vertices, float strokeThickness);
         public abstract void DrawPolyline(List<Vector2> vertices, float strokeThickness, bool isClosedPath = false);
+        protected RectangleF FindBoundingBox(IEnumerable<Vector2> vertices, float strokeThickness = 0)
+        {
+            if (!vertices.Any()) return new RectangleF(0, 0, 0, 0);
+            float minX = vertices.First().X;
+            float maxX = minX;
+            float minY = vertices.First().Y;
+            float maxY = minY;
+            foreach (var v in vertices)
+            {
+                if (v.X < minX) minX = v.X;
+                if (v.X > maxX) maxX = v.X;
+                if (v.Y < minY) minY = v.Y;
+                if (v.Y > maxY) maxY = v.Y;
+            }
+            return new RectangleF(minX, minY, maxX - minX, maxY - minY);
+        }
     }
 }

@@ -32,11 +32,21 @@ namespace XFDrawSamples
             ctx.DrawArc(75, 135, 40, 180, 270, false, 10);
             ctx.SetStrokeColor(Color.Teal);
             ctx.DrawArc(75, 135, 40, 270, 360, false, 10);
-            ctx.SetStrokeColor(Color.Green);
-            ctx.SetFillColor(Color.Navy);
+            var sgb = new LinearGradientBrush();
+            sgb.StartPoint = new Vector2(0, 1);
+            sgb.EndPoint = new Vector2(1, 0);
+            sgb.GradientStops.Add(new GradientStop() { Color = Color.Yellow, Offset = 0 });
+            sgb.GradientStops.Add(new GradientStop() { Color = Color.Green, Offset = 1 });
+            ctx.SetStroke(sgb);
+            var fgb = new LinearGradientBrush();
+            fgb.GradientStops.Add(new GradientStop() { Color = Color.Red, Offset = 0 });
+            fgb.GradientStops.Add(new GradientStop() { Color = Color.Blue, Offset = 1 });
+            ctx.SetFill(fgb);
             ctx.DrawRect(200, 25, 100, 50, 10);
             ctx.DrawRoundedRect(200, 100, 100, 50, 20, 20, 10);
-            ctx.DrawPolyline(polyLine, 2, false);
+//            ctx.SetStrokeColor(Color.Purple);
+            //            ctx.DrawPolyline(polyLine, 4, false);
+            ctx.DrawPolygon(polyLine, 4);
         }
     }
 }

@@ -14,11 +14,13 @@ namespace XFDraw.iOS.Renderers
 {
     class DrawingContextIOS : DrawingContext
     {
-        public CoreGraphics.CGContext cgContext;
+        private CoreGraphics.CGContext cgContext;
+        private UIView view;
 
-        internal void BeginDraw(CGContext g)
+        internal void BeginDraw(CGContext g, UIView view)
         {
             cgContext = g;
+            this.view = view;
         }
 
         bool doStroke;
@@ -26,58 +28,36 @@ namespace XFDraw.iOS.Renderers
 
         CoreGraphics.CGColor aFill;
         CoreGraphics.CGColor aStroke;
-
-
-        internal void DrawRect(nfloat x, nfloat y, nfloat width, nfloat height, nfloat borderThickness)
-        {
-            cgContext.SetLineWidth((nfloat)borderThickness);
-            cgContext.SetFillColor(aFill);
-            cgContext.FillRect((CGRect)new CGRect(x, y, width, height));
-            if (borderThickness > 0)
-            {
-                cgContext.SetStrokeColor(aStroke);
-                cgContext.StrokeRect((CGRect)new CGRect(x, y, width, height));
-            }
-        }
+        CoreGraphics.CGGradient gFill;
+        CoreGraphics.CGGradient gStroke;
+        LinearGradientBrush lgStroke;
+        LinearGradientBrush lgFill;
 
         public override void DrawEllipse(float cx, float cy, float radiusx, float radiusy, float strokeThickness)
         {
-            cgContext.SetLineWidth((nfloat)strokeThickness);
-            cgContext.SetFillColor(aFill);
             var rect = new CGRect(cx - radiusx, cy - radiusy, radiusx * 2, radiusy * 2);
+            var path = new CGPath();
+            path.AddEllipseInRect(rect);
             if (doFill)
             {
-                cgContext.FillEllipseInRect(rect);
+                FillPath(path);
             }
             if (strokeThickness > 0 && doStroke)
             {
-                cgContext.SetStrokeColor(aStroke);
-                cgContext.StrokeEllipseInRect(rect);
+                StrokePath(strokeThickness, path);
             }
         }
 
         public override void DrawRoundedRect(float x, float y, float width, float height, float radiusX, float radiusY, float strokeThickness)
         {
-            if (radiusX == 0 && radiusY == 0)
+            var path = GetRoundedRect(new CGRect(x, y, width, height), radiusX, radiusY);
+            if (doFill)
             {
-                DrawRect(x, y, width, height, strokeThickness);
+                FillPath(path);
             }
-            else
+            if (strokeThickness > 0 && doStroke)
             {
-                var path = GetRoundedRect(new CGRect(x, y, width, height), radiusX, radiusY);
-                if (doFill)
-                {
-                    cgContext.SetFillColor(aFill);
-                    cgContext.AddPath(path);
-                    cgContext.FillPath();
-                }
-                if (strokeThickness > 0 && doStroke)
-                {
-                    cgContext.SetLineWidth((nfloat)strokeThickness);
-                    cgContext.AddPath(path);
-                    cgContext.SetStrokeColor(aStroke);
-                    cgContext.StrokePath();
-                }
+                StrokePath(strokeThickness, path);
             }
         }
 
@@ -90,20 +70,64 @@ namespace XFDraw.iOS.Renderers
 
         public override void SetStroke(Brush brush)
         {
-            aStroke = SetPaint(brush, ref doStroke);
+            if (gStroke != null) gStroke.Dispose();
+            if (brush is SolidColorBrush)
+            {
+                aStroke = SetPaint(brush);
+                gStroke = null;
+            }
+            else if (brush is GradientBrush)
+            {
+                gStroke = SetGradient(brush);
+                lgStroke = brush as LinearGradientBrush;
+                aStroke = null;
+            }
+            else
+            {
+                gStroke = null;
+                aStroke = null;
+            }
+            doStroke = (aStroke != null || gStroke != null);
         }
 
         public override void SetFill(Brush brush)
         {
-            aFill = SetPaint(brush, ref doFill);
+            if (gFill != null) gFill.Dispose();
+            if (brush is SolidColorBrush)
+            {
+                aFill = SetPaint(brush);
+                gFill = null;
+            }
+            else if (brush is GradientBrush)
+            {
+                gFill = SetGradient(brush);
+                lgFill = brush as LinearGradientBrush;
+                aFill = null;
+            }
+            else
+            {
+                gFill = null;
+                aFill = null;
+            }
+            doFill = (aFill != null || gFill != null);
         }
 
-        private CGColor SetPaint(Brush brush, ref bool doPaint)
+        private CGGradient SetGradient(Brush brush)
+        {
+            var g = brush as GradientBrush;
+            using (var colorSpace = CGColorSpace.CreateDeviceRGB())
+            {
+                CGGradient cg = new CGGradient(colorSpace, g.GradientStops.Select(gg => gg.Color.ToCGColor()).ToArray(), g.GradientStops.Select(gg => (nfloat)gg.Offset).ToArray());
+                return cg;
+            }
+        }
+
+        private CGColor SetPaint(Brush brush)
         {
             var sb = brush as SolidColorBrush;
             if (sb == null)
             {
-                doPaint = false;
+                return null;
             }
             else if (sb.Opacity >= 0 && sb.Color.A > 0)
             {
@@ -113,10 +137,8 @@ namespace XFDraw.iOS.Renderers
                     xcolor = xcolor.MultiplyAlpha(sb.Opacity);
                 }
                 var color = xcolor.ToCGColor();
-                doPaint = true;
                 return color;
             }
-            doPaint = false;
             return null;
         }
 
@@ -128,8 +150,7 @@ namespace XFDraw.iOS.Renderers
                 cgContext.SetStrokeColor(aStroke);
                 CoreGraphics.CGPath path = new CoreGraphics.CGPath();
                 path.AddLines(new CGPoint[] { new CGPoint(x1, y1), new CGPoint(x2, y2) });
-                cgContext.AddPath(path);
-                cgContext.DrawPath(CoreGraphics.CGPathDrawingMode.Stroke);
+                StrokePath(strokeThickness, path);
             }
         }
 
@@ -141,24 +162,67 @@ namespace XFDraw.iOS.Renderers
             CoreGraphics.CGPath path = new CoreGraphics.CGPath();
             path.AddLines(vertices.Select(p => new CGPoint(p.X, p.Y)).ToArray());
             path.CloseSubpath();
-            cgContext.BeginPath();
-            cgContext.AddPath(path);
-            cgContext.SetFillColor(fill);
-            cgContext.SetStrokeColor(stroke);
-            cgContext.DrawPath(CoreGraphics.CGPathDrawingMode.Fill);
+            FillPath(path);
             DrawPolyline(vertices, strokeThickness, true);
         }
 
         public override void DrawPolyline(List<Vector2> vertices, float strokeThickness, bool isClosedPath = false)
         {
-            if (strokeThickness == 0 || (float)aStroke.Alpha == 0 || !vertices.Any()) return;
-            cgContext.SetLineWidth((nfloat)strokeThickness);
+            if (strokeThickness == 0 || !doStroke || !vertices.Any()) return;
             cgContext.SetStrokeColor(aStroke);
             CoreGraphics.CGPath path = new CoreGraphics.CGPath();
             path.AddLines(vertices.Select(p => new CGPoint(p.X, p.Y)).ToArray());
-            if (isClosedPath) path.AddLineToPoint(new CGPoint(vertices[0].X, vertices[0].Y));
-            cgContext.AddPath(path);
-            cgContext.DrawPath(CoreGraphics.CGPathDrawingMode.Stroke);
+            if (isClosedPath) path.CloseSubpath();
+            StrokePath(strokeThickness, path);
+        }
+
+        private void FillPath(CGPath path)
+        {
+            if (gFill != null)
+            {
+                cgContext.SaveState();
+                cgContext.AddPath(path);
+                cgContext.ClosePath();
+                cgContext.Clip();
+                var bounds = path.BoundingBox;
+                Matrix3x2 transform = Matrix3x2.CreateScale((float)bounds.Width, (float)bounds.Height) * Matrix3x2.CreateTranslation((float)bounds.X, (float)bounds.Y);
+                var s = Vector2.Transform(lgFill.StartPoint, transform);
+                var e = Vector2.Transform(lgFill.EndPoint, transform);
+                cgContext.DrawLinearGradient(gFill, new CGPoint(s.X, s.Y), new CGPoint(e.X, e.Y), CGGradientDrawingOptions.DrawsBeforeStartLocation | CGGradientDrawingOptions.DrawsAfterEndLocation);
+                cgContext.RestoreState();
+            }
+            else
+            {
+                cgContext.BeginPath();
+                cgContext.SetFillColor(aFill);
+                cgContext.AddPath(path);
+                cgContext.DrawPath(CoreGraphics.CGPathDrawingMode.Fill);
+            }
+        }
+
+        private void StrokePath(float strokeThickness, CGPath path)
+        {
+            if (strokeThickness == 0) return;
+            if (gStroke != null)
+            {
+                var strokedPath = path.CopyByStrokingPath(strokeThickness, CGLineCap.Square, CGLineJoin.Miter, 10);
+                cgContext.SaveState();
+                cgContext.AddPath(strokedPath);
+                cgContext.Clip();
+                var bounds = strokedPath.BoundingBox;
+                Matrix3x2 transform = Matrix3x2.CreateScale((float)bounds.Width, (float)bounds.Height) * Matrix3x2.CreateTranslation((float)bounds.X, (float)bounds.Y);
+                var s = Vector2.Transform(lgStroke.StartPoint, transform);
+                var e = Vector2.Transform(lgStroke.EndPoint, transform);
+                cgContext.DrawLinearGradient(gStroke, new CGPoint(s.X, s.Y), new CGPoint(e.X, e.Y), CGGradientDrawingOptions.DrawsBeforeStartLocation | CGGradientDrawingOptions.DrawsAfterEndLocation);
+                cgContext.RestoreState();
+            }
+            else
+            {
+                cgContext.SetStrokeColor(aStroke);
+                cgContext.SetLineWidth((nfloat)strokeThickness);
+                cgContext.AddPath(path);
+                cgContext.DrawPath(CoreGraphics.CGPathDrawingMode.Stroke);
+            }
         }
 
         public override void DrawArc(float cx, float cy, float radius, float startAngle, float endAngle, bool includeCenterInStroke, float strokeThickness)
@@ -166,22 +230,22 @@ namespace XFDraw.iOS.Renderers
             if (doFill)
             {
                 cgContext.SetFillColor(aFill);
-                cgContext.AddArc(cx, cy, radius, -ToRadians(startAngle), -ToRadians(endAngle), true);
-                cgContext.AddLineToPoint(cx, cy);
-                cgContext.ClosePath();
-                cgContext.FillPath();
+                var path = new CGPath();
+                path.AddArc(cx, cy, radius, -ToRadians(startAngle), -ToRadians(endAngle), true);
+                path.AddLineToPoint(cx, cy);
+                path.CloseSubpath();
+                FillPath(path);
             }
             if (strokeThickness > 0 && doStroke)
             {
-                cgContext.SetLineWidth((nfloat)strokeThickness);
-                cgContext.AddArc(cx, cy, radius, -ToRadians(startAngle), -ToRadians(endAngle), true);
+                var path = new CGPath();
+                path.AddArc(cx, cy, radius, -ToRadians(startAngle), -ToRadians(endAngle), true);
                 if (includeCenterInStroke)
                 {
-                    cgContext.AddLineToPoint(cx, cy);
-                    cgContext.ClosePath();
+                    path.AddLineToPoint(cx, cy);
+                    path.CloseSubpath();
                 }
-                cgContext.SetStrokeColor(aStroke);
-                cgContext.StrokePath();
+                StrokePath(strokeThickness, path);
             }
         }
     }
