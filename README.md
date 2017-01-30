@@ -17,6 +17,6 @@ For a more full featured library, take a look at SkiaSharp https://github.com/mo
 <img src="/Screenshots/iOS_Draw.PNG" height="300"/>
 
 Coming soon:
-- Draw with radial gradients and images
+- Draw with images
 - Draw text
 - Begin work on charting library
